@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class PaymentTransaction extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'patient_id',
+        'appointment_id',
+        'amount',
+        'payment_method',
+        'status',
+        'insurance_claim_number',
+        'insurance_status',
+    ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
+    public function patient()
+    {
+        return $this->belongsTo(User::class, 'patient_id');
+    }
+
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class, 'appointment_id');
+    }
+}

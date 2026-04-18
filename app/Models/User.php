@@ -7,6 +7,10 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Appointment;
+use App\Models\HealthRecord;
+use App\Models\PaymentTransaction;
+use App\Models\PrescriptionOrder;
 
 class User extends Authenticatable
 {
@@ -22,6 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -35,15 +40,37 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    public function appointments()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(Appointment::class, 'patient_id');
+    }
+
+    public function doctorAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
+    }
+
+    public function healthRecords()
+    {
+        return $this->hasMany(HealthRecord::class, 'patient_id');
+    }
+
+    public function prescriptionOrders()
+    {
+        return $this->hasMany(PrescriptionOrder::class, 'patient_id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(PaymentTransaction::class, 'patient_id');
     }
 }
