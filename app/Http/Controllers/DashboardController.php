@@ -7,21 +7,30 @@ use App\Models\HealthRecord;
 use App\Models\PaymentTransaction;
 use App\Models\PharmacyStock;
 use App\Models\PrescriptionOrder;
-use App\Models\User;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        return view('dashboard', [
-            'patientCount' => User::where('role', 'patient')->count(),
-            'doctorCount' => User::where('role', 'doctor')->count(),
-            'pharmacistCount' => User::where('role', 'pharmacist')->count(),
-            'appointmentCount' => Appointment::count(),
-            'ehrCount' => HealthRecord::count(),
-            'pharmacyStockCount' => PharmacyStock::count(),
-            'prescriptionCount' => PrescriptionOrder::count(),
-            'paymentCount' => PaymentTransaction::count(),
-        ]);
+        $user = auth()->user();
+
+        $stats = [
+            'appointments' => Appointment::count(),
+            'records' => HealthRecord::count(),
+            'payments' => PaymentTransaction::count(),
+            'stock_items' => PharmacyStock::count(),
+            'prescriptions' => PrescriptionOrder::count(),
+        ];
+
+        if ($user->role === 'patient') {
+            $stats = [
+                'appointments' => Appointment::where('patient_id', $user->id)->count(),
+                'records' => HealthRecord::where('patient_id', $user->id)->count(),
+                'payments' => PaymentTransaction::where('patient_id', $user->id)->count(),
+                'prescriptions' => PrescriptionOrder::where('patient_id', $user->id)->count(),
+            ];
+        }
+
+        return view('dashboard', compact('stats'));
     }
 }

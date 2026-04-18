@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('pharmacy_stocks', function (Blueprint $table) {
             $table->id();
-            $table->string('drug_name');
+            $table->string('name');
+            $table->text('description')->nullable();
             $table->integer('quantity')->default(0);
-            $table->string('supplier')->nullable();
-            $table->timestamp('last_updated_at')->nullable();
+            $table->decimal('price', 10, 2)->default(0);
             $table->timestamps();
         });
     }

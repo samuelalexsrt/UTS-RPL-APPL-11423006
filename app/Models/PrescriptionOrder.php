@@ -11,12 +11,11 @@ class PrescriptionOrder extends Model
 
     protected $fillable = [
         'patient_id',
-        'doctor_id',
+        'pharmacist_id',
         'pharmacy_stock_id',
-        'medication_name',
-        'dosage',
         'quantity',
         'status',
+        'instructions',
     ];
 
     public function patient()
@@ -24,12 +23,12 @@ class PrescriptionOrder extends Model
         return $this->belongsTo(User::class, 'patient_id');
     }
 
-    public function doctor()
+    public function pharmacist()
     {
-        return $this->belongsTo(User::class, 'doctor_id');
+        return $this->belongsTo(User::class, 'pharmacist_id');
     }
 
-    public function pharmacyStock()
+    public function stock()
     {
         return $this->belongsTo(PharmacyStock::class, 'pharmacy_stock_id');
     }

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('doctor_id')->constrained('users')->cascadeOnDelete();
-            $table->dateTime('scheduled_at');
+            $table->timestamp('scheduled_at');
             $table->string('status')->default('pending');
             $table->text('notes')->nullable();
             $table->timestamps();

@@ -11,70 +11,108 @@ class PrescriptionOrderController extends Controller
 {
     public function index()
     {
-        return view('pharmacy.orders.index', [
-            'orders' => PrescriptionOrder::with(['patient', 'doctor', 'pharmacyStock'])->latest()->get(),
-        ]);
+        $user = auth()->user();
+        $query = PrescriptionOrder::with(['patient', 'pharmacist', 'stock']);
+
+        if ($user->role === 'patient') {
+            $query->where('patient_id', $user->id);
+        }
+
+        if ($user->role === 'pharmacist') {
+            $query->where('pharmacist_id', $user->id);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        return view('prescriptions', compact('orders'));
     }
 
     public function create()
     {
-        return view('pharmacy.orders.create', [
-            'patients' => User::where('role', 'patient')->get(),
-            'doctors' => User::where('role', 'doctor')->get(),
-            'stocks' => PharmacyStock::latest()->get(),
-            'statuses' => ['requested', 'ready', 'fulfilled', 'cancelled'],
-        ]);
+        $patients = User::where('role', 'patient')->get();
+        $stocks = PharmacyStock::where('quantity', '>', 0)->get();
+
+        return view('prescription-form', compact('patients', 'stocks'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'patient_id' => ['required', 'exists:users,id'],
-            'doctor_id' => ['required', 'exists:users,id'],
-            'pharmacy_stock_id' => ['nullable', 'exists:pharmacy_stocks,id'],
-            'medication_name' => ['required', 'string', 'max:255'],
-            'dosage' => ['nullable', 'string', 'max:255'],
+            'pharmacy_stock_id' => ['required', 'exists:pharmacy_stocks,id'],
             'quantity' => ['required', 'integer', 'min:1'],
-            'status' => ['required', 'string', 'max:100'],
+            'instructions' => ['nullable', 'string'],
         ]);
 
-        PrescriptionOrder::create($data);
+        $stock = PharmacyStock::findOrFail($data['pharmacy_stock_id']);
+        if ($data['quantity'] > $stock->quantity) {
+            return back()->withErrors(['quantity' => 'Jumlah melebihi stok tersedia'])->withInput();
+        }
 
-        return redirect()->route('pharmacy.index')->with('success', 'Pesanan resep berhasil dibuat.');
-    }
-
-    public function edit(PrescriptionOrder $order)
-    {
-        return view('pharmacy.orders.edit', [
-            'order' => $order,
-            'patients' => User::where('role', 'patient')->get(),
-            'doctors' => User::where('role', 'doctor')->get(),
-            'stocks' => PharmacyStock::latest()->get(),
-            'statuses' => ['requested', 'ready', 'fulfilled', 'cancelled'],
+        PrescriptionOrder::create([
+            'patient_id' => $data['patient_id'],
+            'pharmacist_id' => auth()->user()->role === 'pharmacist' ? auth()->id() : null,
+            'pharmacy_stock_id' => $data['pharmacy_stock_id'],
+            'quantity' => $data['quantity'],
+            'instructions' => $data['instructions'] ?? null,
+            'status' => 'pending',
         ]);
+
+        return redirect()->route('prescriptions.index')->with('success', 'Pesanan resep berhasil dibuat.');
     }
 
-    public function update(Request $request, PrescriptionOrder $order)
+    public function edit(PrescriptionOrder $prescription)
     {
+        $this->authorizePrescription($prescription);
+
+        $patients = User::where('role', 'patient')->get();
+        $stocks = PharmacyStock::all();
+
+        return view('prescription-form', compact('prescription', 'patients', 'stocks'));
+    }
+
+    public function update(Request $request, PrescriptionOrder $prescription)
+    {
+        $this->authorizePrescription($prescription);
+
         $data = $request->validate([
             'patient_id' => ['required', 'exists:users,id'],
-            'doctor_id' => ['required', 'exists:users,id'],
-            'pharmacy_stock_id' => ['nullable', 'exists:pharmacy_stocks,id'],
-            'medication_name' => ['required', 'string', 'max:255'],
-            'dosage' => ['nullable', 'string', 'max:255'],
+            'pharmacy_stock_id' => ['required', 'exists:pharmacy_stocks,id'],
             'quantity' => ['required', 'integer', 'min:1'],
-            'status' => ['required', 'string', 'max:100'],
+            'status' => ['required', 'in:pending,approved,fulfilled,cancelled'],
+            'instructions' => ['nullable', 'string'],
         ]);
 
-        $order->update($data);
+        $prescription->update($data);
 
-        return redirect()->route('pharmacy.index')->with('success', 'Pesanan resep berhasil diperbarui.');
+        return redirect()->route('prescriptions.index')->with('success', 'Pesanan resep diperbarui.');
     }
 
-    public function destroy(PrescriptionOrder $order)
+    public function destroy(PrescriptionOrder $prescription)
     {
-        $order->delete();
+        $this->authorizePrescription($prescription);
 
-        return redirect()->route('pharmacy.index')->with('success', 'Pesanan resep berhasil dihapus.');
+        $prescription->delete();
+
+        return redirect()->route('prescriptions.index')->with('success', 'Pesanan resep dihapus.');
+    }
+
+    protected function authorizePrescription(PrescriptionOrder $prescription)
+    {
+        $user = auth()->user();
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->role === 'patient' && $prescription->patient_id === $user->id) {
+            return true;
+        }
+
+        if ($user->role === 'pharmacist' && $prescription->pharmacist_id === $user->id) {
+            return true;
+        }
+
+        abort(403);
     }
 }

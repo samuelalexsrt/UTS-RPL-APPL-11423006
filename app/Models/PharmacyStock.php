@@ -10,13 +10,14 @@ class PharmacyStock extends Model
     use HasFactory;
 
     protected $fillable = [
-        'drug_name',
+        'name',
+        'description',
         'quantity',
-        'supplier',
-        'last_updated_at',
+        'price',
     ];
 
-    protected $casts = [
-        'last_updated_at' => 'datetime',
-    ];
+    public function orders()
+    {
+        return $this->hasMany(PrescriptionOrder::class, 'pharmacy_stock_id');
+    }
 }

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -12,11 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('appointment_id')->nullable()->constrained('appointments')->nullOnDelete();
-            $table->decimal('amount', 12, 2)->default(0);
-            $table->string('payment_method')->default('online');
+            $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending');
-            $table->string('insurance_claim_number')->nullable();
-            $table->string('insurance_status')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

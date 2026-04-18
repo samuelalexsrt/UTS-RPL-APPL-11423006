@@ -12,11 +12,9 @@ class HealthRecord extends Model
     protected $fillable = [
         'patient_id',
         'doctor_id',
-        'visit_date',
         'record_type',
+        'visit_date',
         'details',
-        'lab_results',
-        'prescriptions',
     ];
 
     protected $casts = [

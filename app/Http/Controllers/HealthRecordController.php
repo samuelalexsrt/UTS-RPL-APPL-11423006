@@ -10,68 +10,108 @@ class HealthRecordController extends Controller
 {
     public function index()
     {
-        return view('ehr.index', [
-            'records' => HealthRecord::with(['patient', 'doctor'])->latest()->get(),
-        ]);
+        $user = auth()->user();
+        $query = HealthRecord::with(['patient', 'doctor']);
+
+        if ($user->role === 'patient') {
+            $query->where('patient_id', $user->id);
+        }
+
+        if ($user->role === 'doctor') {
+            $query->where('doctor_id', $user->id);
+        }
+
+        $records = $query->orderBy('visit_date', 'desc')->get();
+
+        return view('ehr', compact('records'));
     }
 
     public function create()
     {
-        return view('ehr.create', [
-            'patients' => User::where('role', 'patient')->get(),
-            'doctors' => User::where('role', 'doctor')->get(),
-            'types' => ['consultation', 'diagnosis', 'prescription', 'lab'],
-        ]);
+        $this->authorizeRole(['admin', 'doctor']);
+
+        $patients = User::where('role', 'patient')->get();
+        $doctors = User::where('role', 'doctor')->get();
+
+        return view('ehr-form', compact('patients', 'doctors'));
     }
 
     public function store(Request $request)
     {
+        $this->authorizeRole(['admin', 'doctor']);
+
         $data = $request->validate([
             'patient_id' => ['required', 'exists:users,id'],
             'doctor_id' => ['required', 'exists:users,id'],
+            'record_type' => ['required', 'string', 'max:255'],
             'visit_date' => ['required', 'date'],
-            'record_type' => ['required', 'string', 'max:100'],
             'details' => ['required', 'string'],
-            'lab_results' => ['nullable', 'string'],
-            'prescriptions' => ['nullable', 'string'],
         ]);
 
         HealthRecord::create($data);
 
-        return redirect()->route('ehr.index')->with('success', 'Catatan kesehatan berhasil dibuat.');
+        return redirect()->route('ehr.index')->with('success', 'Catatan kesehatan berhasil ditambahkan.');
     }
 
-    public function edit(HealthRecord $ehr)
+    public function edit(HealthRecord $record)
     {
-        return view('ehr.edit', [
-            'record' => $ehr,
-            'patients' => User::where('role', 'patient')->get(),
-            'doctors' => User::where('role', 'doctor')->get(),
-            'types' => ['consultation', 'diagnosis', 'prescription', 'lab'],
-        ]);
+        $this->authorizeRecord($record);
+
+        $patients = User::where('role', 'patient')->get();
+        $doctors = User::where('role', 'doctor')->get();
+
+        return view('ehr-form', compact('record', 'patients', 'doctors'));
     }
 
-    public function update(Request $request, HealthRecord $ehr)
+    public function update(Request $request, HealthRecord $record)
     {
+        $this->authorizeRecord($record);
+
         $data = $request->validate([
             'patient_id' => ['required', 'exists:users,id'],
             'doctor_id' => ['required', 'exists:users,id'],
+            'record_type' => ['required', 'string', 'max:255'],
             'visit_date' => ['required', 'date'],
-            'record_type' => ['required', 'string', 'max:100'],
             'details' => ['required', 'string'],
-            'lab_results' => ['nullable', 'string'],
-            'prescriptions' => ['nullable', 'string'],
         ]);
 
-        $ehr->update($data);
+        $record->update($data);
 
-        return redirect()->route('ehr.index')->with('success', 'Catatan kesehatan berhasil diperbarui.');
+        return redirect()->route('ehr.index')->with('success', 'Catatan kesehatan diperbarui.');
     }
 
-    public function destroy(HealthRecord $ehr)
+    public function destroy(HealthRecord $record)
     {
-        $ehr->delete();
+        $this->authorizeRecord($record);
 
-        return redirect()->route('ehr.index')->with('success', 'Catatan kesehatan berhasil dihapus.');
+        $record->delete();
+
+        return redirect()->route('ehr.index')->with('success', 'Catatan kesehatan dihapus.');
+    }
+
+    protected function authorizeRecord(HealthRecord $record)
+    {
+        $user = auth()->user();
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->role === 'doctor' && $record->doctor_id === $user->id) {
+            return true;
+        }
+
+        if ($user->role === 'patient' && $record->patient_id === $user->id) {
+            return true;
+        }
+
+        abort(403);
+    }
+
+    protected function authorizeRole(array $roles)
+    {
+        if (! in_array(auth()->user()->role, $roles, true)) {
+            abort(403);
+        }
     }
 }

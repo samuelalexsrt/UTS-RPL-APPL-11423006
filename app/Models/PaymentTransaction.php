@@ -13,14 +13,8 @@ class PaymentTransaction extends Model
         'patient_id',
         'appointment_id',
         'amount',
-        'payment_method',
         'status',
-        'insurance_claim_number',
-        'insurance_status',
-    ];
-
-    protected $casts = [
-        'amount' => 'decimal:2',
+        'notes',
     ];
 
     public function patient()

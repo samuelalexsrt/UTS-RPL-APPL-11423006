@@ -4,77 +4,97 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\PaymentTransaction;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
     public function index()
     {
-        return view('payments.index', [
-            'payments' => PaymentTransaction::with(['patient', 'appointment'])->latest()->get(),
-        ]);
+        $user = auth()->user();
+        $query = PaymentTransaction::with(['patient', 'appointment']);
+
+        if ($user->role === 'patient') {
+            $query->where('patient_id', $user->id);
+        }
+
+        $payments = $query->orderBy('created_at', 'desc')->get();
+
+        return view('payments', compact('payments'));
     }
 
     public function create()
     {
-        return view('payments.create', [
-            'patients' => User::where('role', 'patient')->get(),
-            'appointments' => Appointment::latest()->get(),
-            'methods' => ['online', 'cash', 'insurance', 'card'],
-            'statuses' => ['pending', 'completed', 'failed'],
-        ]);
+        $appointments = Appointment::orderBy('scheduled_at')->get();
+
+        return view('payment-form', compact('appointments'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'patient_id' => ['required', 'exists:users,id'],
-            'appointment_id' => ['nullable', 'exists:appointments,id'],
+            'appointment_id' => ['required', 'exists:appointments,id'],
             'amount' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'max:100'],
-            'insurance_claim_number' => ['nullable', 'string', 'max:255'],
-            'insurance_status' => ['nullable', 'string', 'max:100'],
+            'status' => ['required', 'in:pending,paid,failed'],
+            'notes' => ['nullable', 'string'],
         ]);
 
-        PaymentTransaction::create($data);
+        $payment = PaymentTransaction::create([ 
+            'patient_id' => auth()->user()->id,
+            'appointment_id' => $data['appointment_id'],
+            'amount' => $data['amount'],
+            'status' => $data['status'],
+            'notes' => $data['notes'] ?? null,
+        ]);
 
-        return redirect()->route('payments.index')->with('success', 'Transaksi pembayaran berhasil dibuat.');
+        return redirect()->route('payments.index')->with('success', 'Pembayaran berhasil dicatat.');
     }
 
     public function edit(PaymentTransaction $payment)
     {
-        return view('payments.edit', [
-            'payment' => $payment,
-            'patients' => User::where('role', 'patient')->get(),
-            'appointments' => Appointment::latest()->get(),
-            'methods' => ['online', 'cash', 'insurance', 'card'],
-            'statuses' => ['pending', 'completed', 'failed'],
-        ]);
+        $this->authorizePayment($payment);
+
+        $appointments = Appointment::orderBy('scheduled_at')->get();
+
+        return view('payment-form', compact('payment', 'appointments'));
     }
 
     public function update(Request $request, PaymentTransaction $payment)
     {
+        $this->authorizePayment($payment);
+
         $data = $request->validate([
-            'patient_id' => ['required', 'exists:users,id'],
-            'appointment_id' => ['nullable', 'exists:appointments,id'],
+            'appointment_id' => ['required', 'exists:appointments,id'],
             'amount' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'max:100'],
-            'insurance_claim_number' => ['nullable', 'string', 'max:255'],
-            'insurance_status' => ['nullable', 'string', 'max:100'],
+            'status' => ['required', 'in:pending,paid,failed'],
+            'notes' => ['nullable', 'string'],
         ]);
 
         $payment->update($data);
 
-        return redirect()->route('payments.index')->with('success', 'Transaksi pembayaran berhasil diperbarui.');
+        return redirect()->route('payments.index')->with('success', 'Pembayaran diperbarui.');
     }
 
     public function destroy(PaymentTransaction $payment)
     {
+        $this->authorizePayment($payment);
+
         $payment->delete();
 
-        return redirect()->route('payments.index')->with('success', 'Transaksi pembayaran berhasil dihapus.');
+        return redirect()->route('payments.index')->with('success', 'Pembayaran dihapus.');
+    }
+
+    protected function authorizePayment(PaymentTransaction $payment)
+    {
+        $user = auth()->user();
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->role === 'patient' && $payment->patient_id === $user->id) {
+            return true;
+        }
+
+        abort(403);
     }
 }

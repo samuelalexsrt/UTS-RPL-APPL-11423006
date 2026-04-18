@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,12 +11,11 @@ return new class extends Migration
         Schema::create('prescription_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('patient_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('doctor_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('pharmacy_stock_id')->nullable()->constrained('pharmacy_stocks')->nullOnDelete();
-            $table->string('medication_name');
-            $table->string('dosage')->nullable();
+            $table->foreignId('pharmacist_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('pharmacy_stock_id')->constrained('pharmacy_stocks')->cascadeOnDelete();
             $table->integer('quantity')->default(1);
-            $table->string('status')->default('requested');
+            $table->string('status')->default('pending');
+            $table->text('instructions')->nullable();
             $table->timestamps();
         });
     }
