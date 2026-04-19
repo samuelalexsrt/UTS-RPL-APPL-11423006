@@ -95,3 +95,19 @@ Strategi yang direkomendasikan adalah **Strangler Fig Pattern**:
 3.  **Fase 3: Proxy/Gateway**: Menggunakan API Gateway sebagai perantara (router) yang mengarahkan traffic ke Monolith atau ke Microservice yang baru dibuat.
 4.  **Fase 4: Database Splitting**: Memisahkan skema database secara bertahap hingga setiap service memiliki database independen.
 5.  **Fase 5: Decommissioning**: Menghapus kode lama di Monolith setelah fungsionalitasnya sepenuhnya dipindahkan ke Microservices.
+
+---
+
+## 5. Pola Komunikasi (Communication Patterns)
+
+Hal terpenting dalam memecah Monolith adalah mendefinisikan ulang bagaimana setiap layanan saling berkomunikasi. Arsitektur masa depan ini menggunakan dua pola utama:
+
+### A. Synchronous Communication (REST API via API Gateway)
+Digunakan untuk lalu lintas data yang membutuhkan *feedback* instan (menunggu balasan sebelum melanjutkan proses):
+*   **Contoh:** Pengecekan autentikasi akun sebelum pasien bisa melakukan *booking*, atau mengecek ketersediaan jadwal Dokter (`Appointment_Svc`) secara instan.
+*   **Trade-off:** Berpotensi memblokir proses jika layanan tujuan merespons lambat (solusinya harus menerapkan pola *Circuit Breaker*).
+
+### B. Asynchronous Communication (Message Bus / Event-Driven)
+Digunakan untuk integrasi yang tidak harus real-time (bisa berjalan di *background*) sehingga tidak memperlambat sistem klien:
+*   **Contoh 1 (EHR ke Pharmacy):** Ketika dokter meresepkan obat, `EHR_Svc` memancarkan *event* `medication.prescribed` ke Message Queue. `Pharm_Svc` kemudian mendengarnya dan menyiapkan/mengurangi stok otomatis tanpa menyuruh dokter menunggu loading.
+*   **Contoh 2 (Semua ke Analytics):** `Anal_Svc` terus mengikuti berbagai antrean *event* (seperti `visit.completed`) untuk melatih data analitik performa tanpa mengganggu lalu lintas transaksi operasional di jam sibuk.
