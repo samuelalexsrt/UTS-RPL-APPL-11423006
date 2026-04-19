@@ -1,23 +1,23 @@
 # Laporan Pengembangan Platform MediTrack - Case Study 1
 
-## 2. Design Thinking & Architecture Selection
+## 2. Pemikiran Desain dan Pemilihan Arsitektur (Design Thinking & Architecture Selection)
 
-Sebagai lead architect, saya mengusulkan arsitektur **Modular Monolith** untuk platform MediTrack. Meskipun tantangan pertumbuhan cepat biasanya dikaitkan dengan Microservices, pendekatan Modular Monolith adalah pilihan yang lebih pragmatis dan efisien untuk fase awal hingga menengah pengembangan aplikasi berbasis Laravel.
+Berdasarkan analisis kebutuhan platform bisnis dan target pertumbuhan *MediTrack*, saya, dalam kapasitas sebagai *Lead Architect*, merekomendasikan pendekatan **Modular Monolithic Architecture** pada fase pengembangan awal hingga menengah. Meskipun ekspektasi pertumbuhan yang masif sering kali diasosiasikan secara langsung dengan kebutuhan akan *Microservices*, penerapan arsitektur Monolitik yang dirancang bernilai modular (berbasis domain) merupakan sebuah kompromi strategis (pendekatan *Evolutionary Architecture*). Strategi ini mengutamakan stabilitas fondasi dan kecepatan peluncuran aplikasi (*time-to-market*) tanpa mengorbankan fleksibilitas untuk berevolusi di masa depan.
 
-### a. Justifikasi Pilihan (Prinsip Arsitektur)
-1.  **Simplicity & Development Speed**: Dengan satu codebase dan satu database, tim pengembang dapat bergerak lebih cepat dalam melakukan iterasi fitur tanpa harus mengelola kompleksitas orkestrasi layanan, penemuan layanan (*service discovery*), dan penyeimbangan beban (*load balancing*) antar layanan.
-2.  **Strong Data Consistency (ACID)**: Dalam sistem kesehatan, integritas data sangat krusial (misal: sinkronisasi antara janji temu dan ketersediaan dokter). Arsitektur Monolith memungkinkan kita menggunakan transaksi database tunggal yang atomik, menghindari masalah *distributed transactions* (seperti saga pattern) yang rumit.
-3.  **Low Operational Overhead**: Mengurangi beban biaya infrastruktur dan pemeliharaan operasional. Satu unit deployment berarti pemantauan, logging, dan pipeline CI/CD yang lebih sederhana.
+### a. Justifikasi Pemilihan Berdasarkan Prinsip Arsitektur
+1.  **Simplicity dan Kecepatan Pengembangan (Development Velocity)**: Pemusatan seluruh entitas di dalam satu basis kode (*single codebase*) dan satu sistem basis data tunggal mengeliminasi beban kognitif serta kompleksitas operasional infrastruktur (seperti orkestrasi layanan, penyeimbangan beban jaringan (*sub-network load balancing*), dan pelacakan jaringan terdistribusi). Hal ini menunjang tim *engineering* untuk fokus berinovasi pada logika bisnis yang krusial.
+2.  **Kepatuhan Integritas Data (ACID Compliance) Tingkat Tinggi**: Dalam ekosistem rekam medis elektris dan sistem pembayaran layanan kesehatan, konsistensi dan integritas data bersifat absolut (*zero-tolerance* untuk anomali data). Arsitektur Monolitik memungkinkan penerapan transaksi relasional yang atomik, stabil, dan tersinkronisasi tanpa memerlukan penanganan kompensasi transaksi kompleks (seperti *Saga Pattern* atau *Two-phase Commit*) yang riskan terjadi kegagalan asinkron.
+3.  **Optimalisasi Biaya Operasional (Low Operational Overhead)**: Eksekusi *deployment* tunggal (*single unit of deployment*) secara eksponensial akan menyederhanakan pipeline integrasi serta *deployment* berkelanjutan (CI/CD), menurunkan beban pemantauan (observabilitas), serta meregulasi infrastruktur *hosting* awal menjadi lebih efisien bagi perusahaan.
 
-### b. Trade-offs & Batasan
--   **Technology Lock-in**: Seluruh sistem harus menggunakan tumpukan teknologi yang sama (PHP/Laravel).
--   **Resource Scaling**: Skalabilitas dilakukan secara vertikal atau horizontal untuk seluruh aplikasi, tidak bisa per komponen. Jika modul analitik memakan banyak memori, seluruh instansi aplikasi harus ditingkatkan kapasitasnya.
--   **Deployment Risk**: Bug kecil di satu modul (misal: modul farmasi) berpotensi menyebabkan seluruh aplikasi mati jika tidak ditangani dengan *error handling* yang baik.
+### b. Identifikasi Trade-offs dan Keterbatasan Fundamental
+-   **Keterikatan Penggunaan Teknologi (Technology Lock-in)**: Keharusan penggunaan satu tumpukan pengembang spesifik bahasa (dalam repositori ini difokuskan pada pemanfaatan ekosistem *PHP/Laravel*) dapat menghambat adaptasi pada domain yang memerlukan teknologi khusus (contoh: komputasi *machine learning* untuk sub-modul analitik masa depan).
+-   **Efisiensi Alokasi Skalabilitas (Resource Scaling Limitation)**: Peningkatan dimensi kapasitas (skalabilitas vertikal maupun horizontal) wajib mencakup seluruh entitas aplikasi. Beban trafik komputasional spesifik pada layanan *Appointment*, umpamanya, akan menuntut duplikasi seluruh klon platform utama secara inefisien.
+-   **Risiko Kegagalan Tervalidasi Lingkup Luas (Large Blast Radius)**: Anomali fatal (seperti intrusi *memory leak*) yang dieksekusi di salah satu modul komponen pembantu dapat berisiko mendisrupsi seluruh sistem dan memicu *downtime* layanan menyeluruh.
 
-### c. Skalabilitas, Maintainability, & Extensibility
--   **Scalability**: Platform dapat diskalakan secara horizontal dengan menjalankan beberapa instansi di belakang Load Balancer. Penggunaan Redis untuk session dan cache memastikan aplikasi bersifat *stateless*.
--   **Maintainability**: Dengan mengikuti pola *Domain-Driven Design (DDD)* di dalam struktur folder Laravel (modul terpisah), ketergantungan antar modul diminimalkan sehingga kode mudah dipelihara.
--   **Extensibility**: Integrasi fitur baru dapat dilakukan dengan menambahkan modul/folder baru tanpa merivisi arsitektur inti.
+### c. Penyelarasan Kesinambungan Arsitektur
+-   **Skalabilitas (Scalability)**: Walaupun terpusat, sistem *MediTrack* secara proaktif disesuaikan untuk skala masif melalui skema pendistribusian banyak *instance* (replika server) yang selaras dioperasikan dalam ekosistem *Load Balancer* berlapis, yang dijamin oleh kebijakan aplikasi berstatus *stateless* (data autentikasi menggunakan pengelola *Redis Session/Cache* eksternal).
+-   **Kemudahan Pemeliharaan (Maintainability)**: Pemanfaatan rekayasa struktur konseptual tata letak *Domain-Driven Design (DDD)* mengisolasi perputaran fungsionalitas logika ke dalam batas layanan (*bounded context*) yang ketat. Ini mendorong ketergantungan kohesi modul internal dan secara radikal meringankan navigasi perawatan jangka panjang kode.
+-   **Ekstensibilitas (Extensibility)**: Kemandirian struktur dari setiap domain dapat menjembatani pelebaran utilitas maupun integrasi pihak ketiga dalam siklus selanjutnya, membangun fase landasan ideal sebelum aplikasi ditransformasikan (*strangled out*) menuju *Microservices* di saat batasan Monolitik ini tidak dapat dipertahankan lagi.
 
 ---
 
