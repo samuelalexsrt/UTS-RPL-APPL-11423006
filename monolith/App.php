@@ -1,7 +1,12 @@
 <?php
 
 require_once __DIR__ . '/Database.php';
-require_once __DIR__ . '/Modules/CoreModules.php';
+require_once __DIR__ . '/Modules/Auth.php';
+require_once __DIR__ . '/Modules/Appointment.php';
+require_once __DIR__ . '/Modules/EHR.php';
+require_once __DIR__ . '/Modules/Pharmacy.php';
+require_once __DIR__ . '/Modules/Analytics.php';
+require_once __DIR__ . '/Modules/Payment.php';
 
 use MediTrack\Monolith\Modules\Appointment;
 use MediTrack\Monolith\Modules\EHR;
