@@ -19,4 +19,10 @@ class EHR {
 
         return $db->query('ehr', 'insert', ['patient' => $patientId, 'diag' => $diagnosis]);
     }
+
+    public function getPatientHistory($patientId) {
+        $db = Database::getInstance();
+        echo "[EHR] Mengambil riwayat medis untuk Pasien $patientId\n";
+        return $db->query('ehr', 'select');
+    }
 }

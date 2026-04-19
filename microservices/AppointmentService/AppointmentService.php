@@ -16,6 +16,11 @@ class AppointmentService {
         $this->gateway = new ApiGateway();
     }
 
+    public function checkAvailability($doctorId, $date) {
+        echo "[AppointmentService] Mengecek ketersediaan Dokter $doctorId pada $date via API\n";
+        return true;
+    }
+
     public function schedule($patientId, $doctorId, $dateTime) {
         echo "[AppointmentService] Scheduling appointment for Patient $patientId with Doctor $doctorId at $dateTime\n";
         
@@ -28,5 +33,10 @@ class AppointmentService {
             'time' => $dateTime,
             'status' => 'scheduled'
         ]);
+    }
+
+    public function cancel($appointmentId) {
+        echo "[AppointmentService] CANCEL: Membatalkan janji temu ID $appointmentId\n";
+        return true;
     }
 }

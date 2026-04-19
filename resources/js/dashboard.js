@@ -44,30 +44,47 @@ function sleep(ms) {
 }
 
 async function simulateMonolith() {
-    const modules = ['mono-auth', 'mono-appt', 'mono-ehr', 'mono-pharm', 'mono-pay', 'mono-anal'];
-    for (const id of modules) {
-        const el = document.getElementById(id);
+    const modules = [
+        { id: 'mono-auth', msg: 'Mendaftarkan pasien baru & Login...' },
+        { id: 'mono-appt', msg: 'Mengecek ketersediaan & Membuat janji temu...' },
+        { id: 'mono-ehr', msg: 'Menambahkan rekam medis (Tightly Coupled with Pharmacy)...' },
+        { id: 'mono-pay', msg: 'Memproses pembayaran & Menghasilkan Invoice...' },
+        { id: 'mono-anal', msg: 'Menghasilkan laporan tren kunjungan harian...' }
+    ];
+
+    for (const mod of modules) {
+        const el = document.getElementById(mod.id);
+        if (!el) continue;
         el.querySelector('rect').style.strokeWidth = '4px';
         el.querySelector('rect').style.stroke = 'var(--accent)';
-        logToConsole(`Processing ${id.split('-')[1]} module...`);
-        await sleep(600);
+        logToConsole(mod.msg);
+        await sleep(800);
         el.querySelector('rect').style.strokeWidth = '1px';
         el.querySelector('rect').style.stroke = 'var(--secondary)';
     }
 }
 
 async function simulateMicroservices() {
-    const services = ['svc-auth', 'svc-appt', 'svc-ehr', 'svc-pharm', 'svc-pay', 'svc-anal'];
-    for (const id of services) {
-        const el = document.getElementById(id);
+    const services = [
+        { id: 'svc-auth', msg: 'Auth Service: Mengenali peran Pasien...' },
+        { id: 'svc-appt', msg: 'Appt Service: Validasi jadwal via API Gateway...' },
+        { id: 'svc-ehr', msg: 'EHR Service: Record disimpan & Publish Event...' },
+        { id: 'svc-pharm', msg: 'Pharm Service: Consuming Medication Event...' },
+        { id: 'svc-pay', msg: 'Pay Service: Invoice digital di-generate...' },
+        { id: 'svc-anal', msg: 'Analytics: Analisis data dari Event Stream...' }
+    ];
+
+    for (const svc of services) {
+        const el = document.getElementById(svc.id);
+        if (!el) continue;
         el.querySelector('circle').style.fill = 'rgba(34, 211, 238, 0.4)';
         el.querySelector('circle').style.strokeWidth = '4px';
         
-        logToConsole(`Requesting ${id.split('-')[1]} service via API Gateway...`);
+        logToConsole(svc.msg);
         await sleep(800);
         
-        if (id === 'svc-ehr') {
-            logToConsole(`EHR Service publishing event to Message Bus...`);
+        if (svc.id === 'svc-ehr') {
+            logToConsole(`<span style="color: var(--accent)">[Event]</span> medication.prescribed terkirim ke Message Bus`);
             await sleep(500);
         }
 

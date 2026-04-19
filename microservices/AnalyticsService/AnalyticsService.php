@@ -17,4 +17,14 @@ class AnalyticsService {
         echo "[AnalyticsService] Generating insights from local service data\n";
         return "Insights Data";
     }
+
+    public function getTrends() {
+        echo "[AnalyticsService] TRENDS: Menganalisis data dari event stream (Pasien naik 10%)\n";
+        return ['status' => 'growing'];
+    }
+
+    public function getRevenue() {
+        echo "[AnalyticsService] REVENUE: Menghitung total transaksi lintas layanan\n";
+        return 5000000;
+    }
 }

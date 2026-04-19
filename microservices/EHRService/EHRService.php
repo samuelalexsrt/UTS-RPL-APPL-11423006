@@ -20,7 +20,7 @@ class EHRService {
         echo "[EHRService] Adding record for Pasien $patientId\n";
         $this->db->insert(['patient' => $patientId, 'diag' => $diagnosis]);
 
-        // DECOUPLED COMMUNICATION: Publishing an event instead of direct instantiation
+        // DECOUPLED COMMUNICATION: Publishing an event
         echo "[EHRService] Requesting pharmacy fulfillment via Event...\n";
         $this->eventBus->publish('medication.prescribed', [
             'patientId' => $patientId,
@@ -28,6 +28,14 @@ class EHRService {
             'qty' => 1
         ]);
 
+        // Triger Analytics Event
+        $this->eventBus->publish('visit.completed', ['patientId' => $patientId, 'type' => 'OPD']);
+
         return true;
+    }
+
+    public function getPatientHistory($patientId) {
+        echo "[EHRService] HISTORY: Mengambil riwayat Pasien $patientId dari database mandiri\n";
+        return $this->db->select(['patient' => $patientId]);
     }
 }
