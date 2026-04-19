@@ -14,34 +14,39 @@ use MediTrack\Microservices\Pharmacy\PharmacyService;
 use MediTrack\Microservices\Payment\PaymentService;
 use MediTrack\Microservices\Analytics\AnalyticsService;
 
-echo "=== MediTrack Microservices Architecture Simulation ===\n\n";
+echo "=== MediTrack Microservices API Connectivity Test ===\n\n";
 
-// 1. Auth Service
+// 1. Auth Service - Mencoba Registrasi & Auth
 $auth = new AuthService();
-$auth->authenticate('user1', 'pass123');
+$auth->register(['name' => 'Budi Santoso', 'email' => 'budi@example.com']);
+$auth->authenticate('budi', 'password123');
 
-// 2. Appointment Service (NEW)
+// 2. Appointment Service - Cek Ketersediaan & Jadwalkan
 $appt = new AppointmentService();
-$appt->schedule('Budi', 'Dr. Smith', '2026-05-20 10:00');
+$appt->checkAvailability(101, '2026-05-20');
+$appt->schedule('Budi', 101, '2026-05-20 10:00');
 
-// 3. EHR Service mencatat diagnosa & trigger event
+// 3. EHR Service - Tambah Record & Cek Riwayat
 $ehrService = new EHRService();
-$ehrService->addRecord('Budi', 'Batuk Berdahak', ['drug' => 'Amoxicillin']);
+$ehrService->addRecord('Budi', 'Flu Ringan', ['drug' => 'Paracetamol']);
+$ehrService->getPatientHistory('Budi');
 
-// 4. Payment Service memproses biaya
+// 4. Payment Service - Proses Invoice digital
 $payment = new PaymentService();
-$payment->processInvoice(200.00);
+$paymentId = $payment->processInvoice(150000);
+$payment->generateInvoice($paymentId);
 
-// 5. Analytics Service bekerja secara independen
+// 5. Analytics Service - Mendapatkan Tren Bisnis
 $analytics = new AnalyticsService();
-$analytics->generateHealthInsights();
+$analytics->getTrends();
+$analytics->getRevenue();
 
-echo "\n--- Background Processing (Simulated) ---\n";
+echo "\n--- Background Event Check ---\n";
 
-// 6. Pharmacy Service menerima event (simulasi manual)
+// 6. Pharmacy Service - Mensimulasikan konsumsi event dari EHR
 $pharmacyService = new PharmacyService();
-if ($pharmacyService->checkInventory('Amoxicillin')) {
-    $pharmacyService->dispense('Amoxicillin', 1);
+if ($pharmacyService->checkInventory('Paracetamol')) {
+    $pharmacyService->dispense('Paracetamol', 1);
 }
 
-echo "\nSimulation Finished.\n";
+echo "\nConnectivity Test Finished Successfully.\n";

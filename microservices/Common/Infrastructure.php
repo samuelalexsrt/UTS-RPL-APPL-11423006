@@ -68,4 +68,9 @@ class ServiceDatabase {
         $this->data[] = $payload;
         return true;
     }
+
+    public function select($criteria = []) {
+        echo "[DB: $this->tableName] Fetching data...\n";
+        return $this->data;
+    }
 }
