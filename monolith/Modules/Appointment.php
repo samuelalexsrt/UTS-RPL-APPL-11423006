@@ -12,7 +12,7 @@ class Appointment {
 
     public function schedule($data) {
         $db = Database::getInstance();
-        echo "[Appointment] Menjadwalkan pertemuan untuk " . $data['patient'] . " dengan Dokter ID " . $data['doctorId'] . "\n";
+        echo "[Appointment] Menjadwalkan pertemuan untuk " . $data['patient'] . " dengan " . $data['doctor'] . "\n";
         return $db->query('appointments', 'insert', $data);
     }
 

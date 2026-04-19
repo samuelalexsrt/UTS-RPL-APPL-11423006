@@ -1,5 +1,7 @@
-# Laporan Arsitektur: MediTrack Transformation
+# Laporan Arsitektur: MediTrack Transformation (Case Study 2)
 
+## Skenario Transformasi
+Sesuai rancangan pada **Case Study 1**, MediTrack saat ini diimplementasikan sebagai aplikasi **Modular Monolith berbasis PHP (Laravel)**. Semua modul (Auth/User, Appointment, EHR, Pharmacy, Analytics, Payment) tergabung dalam satu codebase dan dapat berjalan dengan baik. Namun, seiring dengan target ekspansi rumah sakit ke berbagai wilayah, perusahaan memutuskan untuk berevolusi menuju **Arsitektur Microservices** guna memastikan skalabilitas tanpa batas, isolasi kegagalan, dan kemudahan pemeliharaan lintas tim.
 ## 1. Use Cases (Kasus Penggunaan)
 Berdasarkan studi kasus MediTrack, berikut adalah kasus penggunaan utama untuk setiap modul:
 
